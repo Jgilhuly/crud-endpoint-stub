@@ -2,15 +2,17 @@
 from typing import List, Optional
 from datetime import datetime
 
-from models import Product, ProductCreate, ProductUpdate
+from models import Product, ProductCreate, ProductUpdate, User, UserCreate, UserUpdate
 
 
 class InMemoryDatabase:
-    """In-memory database for storing and managing products."""
+    """In-memory database for storing and managing products and users."""
 
     def __init__(self):
         self.products: List[Product] = []
-        self.next_id = 1
+        self.users: List[User] = []
+        self.next_product_id = 1
+        self.next_user_id = 1
         self._init_sample_data()
 
     def _init_sample_data(self):
@@ -45,12 +47,12 @@ class InMemoryDatabase:
     def create_product(self, product_data: ProductCreate) -> Product:
         """Create a new product in the database."""
         product = Product(
-            id=self.next_id,
-            **product_data.dict(),
+            id=self.next_product_id,
+            **product_data.model_dump(),
             created_at=datetime.now()
         )
         self.products.append(product)
-        self.next_id += 1
+        self.next_product_id += 1
         return product
 
     def get_all_products(self) -> List[Product]:
@@ -70,7 +72,7 @@ class InMemoryDatabase:
         if not product:
             return None
 
-        update_dict = update_data.dict(exclude_unset=True)
+        update_dict = update_data.model_dump(exclude_unset=True)
         for field, value in update_dict.items():
             setattr(product, field, value)
 
@@ -81,6 +83,51 @@ class InMemoryDatabase:
         for i, product in enumerate(self.products):
             if product.id == product_id:
                 del self.products[i]
+                return True
+        return False
+
+    def create_user(self, user_data: UserCreate) -> User:
+        """Create a new user in the database."""
+        user = User(
+            id=self.next_user_id,
+            **user_data.model_dump(),
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        self.users.append(user)
+        self.next_user_id += 1
+        return user
+
+    def get_all_users(self) -> List[User]:
+        """Get all users from the database."""
+        return self.users
+
+    def get_user(self, user_id: int) -> Optional[User]:
+        """Get a specific user by ID."""
+        for user in self.users:
+            if user.id == user_id:
+                return user
+        return None
+
+    def update_user(self, user_id: int, update_data: UserUpdate) -> Optional[User]:
+        """Update an existing user in the database."""
+        user = self.get_user(user_id)
+        if not user:
+            return None
+
+        update_dict = update_data.model_dump(exclude_unset=True)
+        for field, value in update_dict.items():
+            if field != "updated_at":  # Skip the auto-updated field
+                setattr(user, field, value)
+        user.updated_at = datetime.now()  # Always update the timestamp
+
+        return user
+
+    def delete_user(self, user_id: int) -> bool:
+        """Delete a user from the database."""
+        for i, user in enumerate(self.users):
+            if user.id == user_id:
+                del self.users[i]
                 return True
         return False
 
