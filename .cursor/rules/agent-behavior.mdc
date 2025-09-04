@@ -1,0 +1,8 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+Always state which rules you are applying
+1. Never start the dev server, always assume it is running already.
